@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="utf-8"/>
+	<script>
+		window.onload = function(){
+			if(window.openDatabase == undefined){
+				alert("Do not support WebSQL Database");
+				return;
+			}
+
+			var dbName = 'test';
+			var displayName = 'TestDB';
+			var dbSize = 1024 * 1000;
+			var db = openDatabase(dbName, '', displayName, dbSize);
+
+			db.transaction(
+				function(tr){
+					// VALUESをVALUEと誤って記載していたら、DBが作成されず、少しはまりました。注意してください。
+					tr.executeSql("CREATE TABLE IF NOT EXISTS persons(name TEXT, fName TEXT, age INTEGER)");
+					tr.executeSql("INSERT INTO persons(name, fName, age) VALUES('taro', 'yamada', 22)");
+					tr.executeSql("INSERT INTO persons(name, fName, age) VALUES('jiro', 'nakayama', 5)");
+					tr.executeSql("INSERT INTO persons(name, fName, age) VALUES('saburo', 'kitajima', 60)");
+					tr.executeSql("INSERT INTO persons(name, fName, age) VALUES('hanako', 'yamada', 24)");
+					tr.executeSql("INSERT INTO persons(name, fName, age) VALUES(?,?,?)", ['sirou', 'itou', 3]);
+				}
+			);
+
+			var select   = document.querySelector('#select');
+			var textBox1 = document.querySelector('#textBox1');
+
+			select.addEventListener('click',
+				function(){
+					db.transaction(
+						function(tr){
+							tr.executeSql("SELECT * FROM persons where fName=?", [textBox1.value],
+								function(tr, rs){
+									for(var i=0; i<rs.rows.length; i++){
+										var row = rs.rows.item(i);
+										alert(row.fName + ' ' + row.name + ':' + row.age);
+									}
+								}
+							);
+						}
+					);
+				}, 
+				false
+			);
+		}
+
+	</script>
+</head>
+
+<body>
+	<input type="text"   id="textBox1" placeholder="family name">
+	<input type="button" id="select"    value="SELECT">
+	Enter: yamada or nakayama or kitajima or itou
+</body>
+</html>
